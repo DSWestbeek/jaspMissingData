@@ -219,20 +219,30 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
     predMat <- passive$pred
   }
 
-  miceOut <- try(
-    with(options,
-      mice::mice(
-        data            = dataset,
-        m               = nImp,
-        method          = methVec,
-        predictorMatrix = predMat,
-        visitSequence   = visitSequence,
-        maxit           = nIter,
-        seed            = seed,
-        print           = FALSE
-      )
+  if (!is.null(jaspResults[["MiceMids"]]$object)) {                     # if we already computed some iterations
+    currentMiceMids <- jaspResults[["MiceMids"]]$object
+    currentIter <- currentMiceMids$iteration
+    savedIter <- dim(currentMiceMids$chainMean)[1]                      # that are saved properly
+    wantedIter <- options$nIter
+    addIter <- max(0, wantedIter - currentIter)                         # and we want more,
+    if (addIter > 0 && currentIter == savedIter && options$seed == currentMiceMids$seed) {
+      miceOut <- try(mice::mice.mids(currentMiceMids, maxit = addIter)) # we continue iterating if seed is unchanged
+    }
+  } else {                                                              # else we just run mice from the beginning
+    miceOut <- try(
+      with(options,
+           mice::mice(
+             data            = dataset,
+             m               = nImps,
+             method          = methVec,
+             predictorMatrix = predMat,
+             visitSequence   = visitSequence,
+             maxit           = nIter,
+             seed            = seed,
+             print           = FALSE
+           ))
     )
-  )
+  }
 
   if (!inherits(miceOut, "try-error")) {
     miceMids$object          <- miceOut
