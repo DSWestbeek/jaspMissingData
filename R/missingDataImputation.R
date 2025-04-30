@@ -219,28 +219,36 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
     predMat <- passive$pred
   }
 
-  if (!is.null(jaspResults[["MiceMids"]]$object)) {                     # if we already computed some iterations
-    currentMiceMids <- jaspResults[["MiceMids"]]$object
-    currentIter <- currentMiceMids$iteration
-    savedIter <- dim(currentMiceMids$chainMean)[1]                      # that are saved properly
-    wantedIter <- options$nIter
-    addIter <- max(0, wantedIter - currentIter)                         # and we want more,
-    if (addIter > 0 && currentIter == savedIter && options$seed == currentMiceMids$seed) {
-      miceOut <- try(mice::mice.mids(currentMiceMids, maxit = addIter)) # we continue iterating if seed is unchanged
-    }
-  } else {                                                              # else we just run mice from the beginning
+  updateMids <- FALSE
+  if (!is.null(miceMids$object)) {
+    currentMiceMids <- miceMids$object
+    currentIter     <- currentMiceMids$iteration
+    savedIter       <- if (is.null(currentMiceMids$chainMean)) 0 else dim(currentMiceMids$chainMean)[1]
+    wantedIter      <- options$nIter
+    addIter         <- max(0, wantedIter - currentIter)
+
+    nActiveVars <- sum(!startsWith(methVec, "passive") & methVec != "")
+    nChains <- if (is.null(currentMiceMids$chainMean)) 0 else dim(currentMiceMids$chainMean)[3]
+
+    updateMids <- addIter > 0 && options$seed == currentMiceMids$seed && savedIter >= nChains && nChains == nActiveVars
+  }
+
+  if (updateMids) {
+    miceOut <- try(mice::mice.mids(currentMiceMids, maxit = addIter))
+  } else {
     miceOut <- try(
       with(options,
            mice::mice(
              data            = dataset,
-             m               = nImps,
+             m               = nImp,
              method          = methVec,
              predictorMatrix = predMat,
              visitSequence   = visitSequence,
              maxit           = nIter,
              seed            = seed,
              print           = FALSE
-           ))
+           )
+      )
     )
   }
 
