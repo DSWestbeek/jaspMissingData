@@ -40,6 +40,10 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
     .initMiceMids(jaspResults)
     options <- .imputeMissingData(jaspResults[["MiceMids"]], dataset, options)
 
+    if (!is.null(jaspResults[["MiceMids"]]$object)) {
+      .loggedEventsToTable(jaspResults, options)
+    }
+
     ## Initialize containers to hold the convergence plots and analysis results:
     .initConvergencePlots(jaspResults)
     .initAnalysisContainer(jaspResults)
@@ -189,14 +193,14 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
 
   if (options$quickpred) { # Use mice::quickpred() to construct the predictor matrix
     predMat <- with(options,
-      mice::quickpred(
-        data    = dataset,
-        mincor  = quickpredMincor,
-        minpuc  = quickpredMinpuc,
-        include = quickpredIncludes,
-        exclude = quickpredExcludes,
-        method  = quickpredMethod
-      )
+                    mice::quickpred(
+                      data    = dataset,
+                      mincor  = quickpredMincor,
+                      minpuc  = quickpredMinpuc,
+                      include = quickpredIncludes,
+                      exclude = quickpredExcludes,
+                      method  = quickpredMethod
+                    )
     )
 
     return(predMat)
@@ -209,7 +213,6 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
 ###-Output Functions-------------------------------------------------------------------------------------------------###
 
 .imputeMissingData <- function(miceMids, dataset, options) {
-
   methVec <- .makeMethodVector(dataset, options)
   predMat <- .makePredictorMatrix(dataset, options)
 
@@ -268,6 +271,50 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
   # dataset <<- miceOut$data ##############################################################################################
 
   options
+}
+
+###------------------------------------------------------------------------------------------------------------------###
+
+.loggedEventsToTable <- function(jaspResults, options) {
+  miceMids <- jaspResults[["MiceMids"]]
+  miceOut <- miceMids$object
+  events <- miceOut$loggedEvents
+
+  if (is.null(jaspResults[["LoggedEventsTable"]])) {
+    table <- createJaspTable("Logged events")
+    table$dependOn(c("method", "nImps", "nIter", "seed", "printAllLoggedEvents", "maxLoggedEvents", "passive", "passiveImputation", "quickpred", "imputationVariables"))
+    table$addColumnInfo(name = "Iteration", title = "Iteration", type = "integer")
+    table$addColumnInfo(name = "Imputation", title = "Imputation", type = "integer")
+    table$addColumnInfo(name = "Variable", title = "Variable", type = "string")
+    table$addColumnInfo(name = "Method", title = "Method", type = "string")
+    table$addColumnInfo(name = "Out", title = "Out", type = "string")
+    jaspResults[["LoggedEventsTable"]] <- table
+  } else {
+    table <- jaspResults[["LoggedEventsTable"]]
+  }
+
+  if (is.null(events) || nrow(events) == 0) {
+    table$addFootnote(paste0("No events were logged."))
+    return()
+  }
+
+  maxToShow <- if (isTRUE(options$printAllLoggedEvents)) nrow(events) else options$maxLoggedEvents
+  nShown <- min(nrow(events), maxToShow)
+  for (i in seq_len(nShown)) {
+    table$addRows(list(
+      Iteration = events[i, "it"],
+      Imputation = events[i, "im"],
+      Variable = events[i, "dep"],
+      Method = events[i, "meth"],
+      Out = events[i, "out"]
+    ))
+  }
+
+  if (nShown < nrow(events)) {
+    table$addFootnote(paste0("Showing ", nShown, " of a total of ", nrow(events), " events"))
+  } else {
+    table$addFootnote(paste0("All ", nrow(events), " events are shown"))
+  }
 }
 
 ###------------------------------------------------------------------------------------------------------------------###
