@@ -286,8 +286,8 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
     table$addColumnInfo(name = "Iteration", title = "Iteration", type = "integer")
     table$addColumnInfo(name = "Imputation", title = "Imputation", type = "integer")
     table$addColumnInfo(name = "Variable", title = "Variable", type = "string")
-    table$addColumnInfo(name = "Method", title = "Method", type = "string")
-    table$addColumnInfo(name = "Out", title = "Out", type = "string")
+    table$addColumnInfo(name = "Message", title = "Message", type = "string")
+    table$addColumnInfo(name = "Predictor", title = "Predictor", type = "string")
     jaspResults[["LoggedEventsTable"]] <- table
   } else {
     table <- jaspResults[["LoggedEventsTable"]]
@@ -305,8 +305,8 @@ MissingDataImputation <- function(jaspResults, dataset, options) {
       Iteration = events[i, "it"],
       Imputation = events[i, "im"],
       Variable = events[i, "dep"],
-      Method = events[i, "meth"],
-      Out = events[i, "out"]
+      Message = events[i, "meth"],
+      Predictor = events[i, "out"]
     ))
   }
 
