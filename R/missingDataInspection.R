@@ -53,14 +53,14 @@ MissingDataInspection <- function(jaspResults, dataset, options) {
 
 ###-Common Functions (We shouldn't be copying these)-------------------------------------------------------------------------###
 
-# .readData <- function(options) {
-#   vars <- unlist(options$variables)
-#   # Read in the dataset using the built-in functions
-#   if (!is.null(options$groupVar) && options$groupVar != "")
-#     .readDataSetToEnd(columns = vars, columns.as.factor = options$groupVar)
-#   else
-#     .readDataSetToEnd(columns = vars)
-# }
+.readData <- function(options) {
+  vars <- unlist(options$variables)
+  # Read in the dataset using the built-in functions
+  if (!is.null(options$groupVar) && options$groupVar != "")
+    .readDataSetToEnd(columns = vars, columns.as.factor = options$groupVar)
+  else
+    .readDataSetToEnd(columns = vars)
+}
 
 # ###--------------------------------------------------------------------------------------------------------------------------###
 
